@@ -3,14 +3,15 @@
  * Built with HTML, CSS, JS, Tailwind, Dexie.js
  */
 
-const db = new Dexie('HardwareDB');
-db.version(2).stores({
+db.version(3).stores({
     products: '++id, name, category, wholesalePrice, retailPrice, stockCount, unit, code, type',
     sales: '++id, date, totalAmount, discount, paymentMethod, items, customerId',
     customers: '++id, name, phone, creditBalance',
     suppliers: '++id, name, contact',
-    settings: 'id, shopName, address, phone, headerMessage, footerMessage, logoUrl'
+    settings: 'id, shopName, address, phone, headerMessage, footerMessage, logoUrl',
+    notes: '++id, title, content, date'
 });
+
 
 // Upgrade handling for existing version 1 users
 db.version(2).stores({
@@ -45,7 +46,9 @@ const app = {
             nav_suppliers: "Suppliers",
             nav_history: "History",
             nav_settings: "Settings",
+            nav_notes: "Notes",
             backup_data: "Backup Data",
+
             restore_data: "Restore Data",
 
             // Dashboard
@@ -164,7 +167,16 @@ const app = {
             no_results: "No results found.",
             confirm_title: "Are you sure?",
             confirm_delete_msg: "This will permanently delete this record.",
-            confirm_void_msg: "This will void the bill and restore stock. Proceed?"
+            confirm_void_msg: "This will void the bill and restore stock. Proceed?",
+            notes_title: "My Notes",
+            add_note: "Add New Note",
+            th_title: "Title",
+            th_content: "Content",
+            save_note: "Save Note",
+            toast_note_saved: "Note Saved!",
+            toast_note_deleted: "Note Deleted!",
+            confirm_delete_note: "Are you sure you want to delete this note?"
+
         },
 
         si: {
@@ -176,7 +188,9 @@ const app = {
             nav_suppliers: "සැපයුම්කරුවන්",
             nav_history: "ඉතිහාසය",
             nav_settings: "සැකසුම්",
+            nav_notes: "සටහන්",
             backup_data: "දත්ත සුරකින්න",
+
             restore_data: "දත්ත නැවත ගන්න",
 
             // Dashboard
@@ -247,6 +261,15 @@ const app = {
             edit_product: "භාණ්ඩය වෙනස් කරන්න",
             save_product: "සුරකින්න",
             save_btn: "සුරකින්න",
+            notes_title: "මගේ සටහන්",
+            add_note: "අලුත් සටහනක්",
+            th_title: "මාතෘකාව",
+            th_content: "විස්තරය",
+            save_note: "සටහන සුරකින්න",
+            toast_note_saved: "සටහන සුරැකිණ!",
+            toast_note_deleted: "සටහන ඉවත් කළා!",
+            confirm_delete_note: "ඔබට මෙම සටහන ඉවත් කිරීමට අවශ්‍ය බව ස්ථිරද?",
+
 
             // Alerts
             confirm_delete_product: "ඔබට මෙම භාණ්ඩය මැකීමට අවශ්‍යද?",
@@ -566,7 +589,9 @@ const app = {
                         case 'customers': await app.views.customers(container); break;
                         case 'suppliers': await app.views.suppliers(container); break;
                         case 'reports': await app.views.reports(container); break;
+                        case 'notes': await app.views.notes(container); break;
                         case 'settings': await app.views.settings(container); break;
+
                     }
                     lucide.createIcons();
                 } catch (err) {
@@ -1197,6 +1222,79 @@ const app = {
             lucide.createIcons();
         },
 
+        notes: async (container) => {
+            const notes = await db.notes.orderBy('date').reverse().toArray();
+            container.innerHTML = `
+                <div class="p-8 fade-in h-full flex flex-col">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-4xl font-bold bg-gradient-to-r from-indigo-400 to-pink-500 bg-clip-text text-transparent glow-text tracking-tight">${app.t('notes_title')}</h2>
+                        <button onclick="app.handlers.openNoteModal()" class="bg-indigo-600 hover:bg-indigo-500 text-white px-6 py-3 rounded-2xl flex items-center gap-2 shadow-xl shadow-indigo-500/20 active:scale-95 transition-all">
+                            <i data-lucide="plus" class="w-5 h-5"></i> ${app.t('add_note')}
+                        </button>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 overflow-y-auto pr-2 custom-scrollbar">
+                        ${notes.map(note => `
+                            <div class="glass-card p-6 rounded-[2rem] border border-white/5 relative group hover:border-indigo-500/30 transition-all duration-300">
+                                <div class="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <button onclick="app.handlers.editNote(${note.id})" class="p-2 bg-slate-800/80 rounded-full text-indigo-400 hover:text-white transition-colors">
+                                        <i data-lucide="edit-2" class="w-4 h-4"></i>
+                                    </button>
+                                    <button onclick="app.handlers.deleteNote(${note.id})" class="p-2 bg-slate-800/80 rounded-full text-rose-400 hover:text-white transition-colors">
+                                        <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                    </button>
+                                </div>
+                                <h3 class="text-xl font-bold text-white mb-2 pr-12">${note.title}</h3>
+                                <p class="text-slate-400 text-sm whitespace-pre-wrap mb-4">${note.content}</p>
+                                <div class="flex items-center justify-between mt-auto pt-4 border-t border-white/5">
+                                    <span class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">${new Date(note.date).toLocaleDateString()}</span>
+                                    <i data-lucide="sticky-note" class="w-4 h-4 text-indigo-500/30"></i>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+
+                    ${notes.length === 0 ? `
+                        <div class="flex-1 flex flex-col items-center justify-center text-slate-500 opacity-40">
+                            <i data-lucide="sticky-note" class="w-24 h-24 mb-4"></i>
+                            <p class="text-xl font-bold">No notes found</p>
+                            <p class="text-sm">Keep track of your hardware stock tasks here.</p>
+                        </div>
+                    ` : ''}
+                </div>
+
+                <!-- Note Modal -->
+                <div id="note-modal" class="hidden fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/60 backdrop-blur-sm transition-opacity duration-300">
+                    <div class="glass-card w-full max-w-lg rounded-[2.5rem] p-8 border border-white/10 shadow-2xl relative">
+                        <button onclick="app.handlers.closeNoteModal()" class="absolute top-6 right-6 text-slate-500 hover:text-white transition-colors">
+                            <i data-lucide="x" class="w-6 h-6"></i>
+                        </button>
+                        <h3 id="note-modal-title" class="text-2xl font-black text-white mb-6 italic tracking-tight">${app.t('add_note')}</h3>
+                        <form onsubmit="app.handlers.saveNote(event)" class="space-y-4">
+                            <input type="hidden" id="note-id">
+                            <div>
+                                <label class="block text-xs font-black uppercase tracking-widest text-slate-500 mb-2 ml-1">${app.t('th_title')}</label>
+                                <input type="text" id="note-title" required 
+                                    class="w-full bg-slate-900/60 border border-slate-700/50 rounded-2xl px-5 py-4 text-white focus:outline-none focus:border-indigo-500 transition-all shadow-inner">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-black uppercase tracking-widest text-slate-500 mb-2 ml-1">${app.t('th_content')}</label>
+                                <textarea id="note-content" required rows="6"
+                                    class="w-full bg-slate-900/60 border border-slate-700/50 rounded-3xl px-5 py-4 text-white focus:outline-none focus:border-indigo-500 transition-all shadow-inner resize-none"></textarea>
+                            </div>
+                            <button type="submit" 
+                                class="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-black py-4 rounded-2xl transition-all shadow-xl shadow-indigo-500/20 active:scale-[0.98] flex items-center justify-center gap-3">
+                                <i data-lucide="check-circle" class="w-6 h-6"></i>
+                                ${app.t('save_note')}
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            `;
+            lucide.createIcons();
+        },
+
+
         settings: async (container) => {
             const s = app.state.settings;
             container.innerHTML = `
@@ -1496,6 +1594,72 @@ const app = {
                 }
             }
         },
+
+        openNoteModal: (id = null) => {
+            const modal = document.getElementById('note-modal');
+            if (!modal) return;
+            const form = modal.querySelector('form');
+            const titleInput = document.getElementById('note-title');
+            const contentInput = document.getElementById('note-content');
+            const idInput = document.getElementById('note-id');
+            const modalTitle = document.getElementById('note-modal-title');
+
+            if (id) {
+                db.notes.get(id).then(note => {
+                    idInput.value = note.id;
+                    titleInput.value = note.title;
+                    contentInput.value = note.content;
+                    modalTitle.innerText = app.t('edit_product');
+                });
+            } else {
+                form.reset();
+                idInput.value = "";
+                modalTitle.innerText = app.t('add_note');
+            }
+
+            modal.classList.remove('hidden');
+            setTimeout(() => modal.classList.add('opacity-100'), 10);
+        },
+
+        closeNoteModal: () => {
+            const modal = document.getElementById('note-modal');
+            if (!modal) return;
+            modal.classList.remove('opacity-100');
+            setTimeout(() => modal.classList.add('hidden'), 300);
+        },
+
+        saveNote: async (e) => {
+            e.preventDefault();
+            const id = document.getElementById('note-id').value;
+            const note = {
+                title: document.getElementById('note-title').value,
+                content: document.getElementById('note-content').value,
+                date: new Date().getTime()
+            };
+
+            if (id) {
+                await db.notes.update(parseInt(id), note);
+            } else {
+                await db.notes.add(note);
+            }
+
+            app.handlers.closeNoteModal();
+            app.navigate('notes');
+            app.showToast(app.t('toast_note_saved'), 'success');
+        },
+
+        editNote: (id) => {
+            app.handlers.openNoteModal(id);
+        },
+
+        deleteNote: async (id) => {
+            if (await app.confirm({ title: app.t('confirm_title'), message: app.t('confirm_delete_note'), type: 'danger' })) {
+                await db.notes.delete(id);
+                app.navigate('notes');
+                app.showToast(app.t('toast_note_deleted'), 'info');
+            }
+        },
+
 
 
         addToCart: async (id) => {
