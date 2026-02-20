@@ -30,6 +30,8 @@ const app = {
         settings: null,
         language: localStorage.getItem('pos_lang') || 'en',
         isSidebarOpen: false,
+        lowStockOnly: false,
+        isCartOpen: false, // Mobile cart visibility
     },
 
 
@@ -770,109 +772,118 @@ const app = {
         },
 
         pos: async (container) => {
-            // Cart persistence: Do not clear app.state.cart here
             const products = await db.products.toArray();
             const customers = await db.customers.toArray();
 
             container.innerHTML = `
-                <div class="h-full flex flex-col md:flex-row gap-6 p-4 fade-in">
-                    <!-- Left: Products Grid -->
-                    <div class="flex-1 flex flex-col gap-4 overflow-hidden h-full">
-                        <div class="glass-card p-4 rounded-xl flex gap-4 sticky top-0 z-10">
-                            <div class="relative flex-1">
-                                <i data-lucide="search" class="absolute left-3 top-3 text-indigo-400 w-5 h-5"></i>
-                                <input type="text" id="pos-search" placeholder="${app.t('search_product_placeholder')}" 
-                                    class="w-full bg-slate-900/50 border border-slate-700/50 rounded-lg pl-10 pr-4 py-2.5 text-white focus:outline-none focus:border-indigo-500 transition-colors shadow-inner"
-                                    oninput="app.handlers.posSearch(this.value)">
-                            </div>
-                            <div class="flex gap-2">
-                                <button class="p-2.5 rounded-lg bg-slate-800 border border-slate-700 hover:bg-slate-700 text-slate-300 transition-colors" title="Filter"><i data-lucide="filter" class="w-5 h-5"></i></button>
-                                <button class="p-2.5 rounded-lg bg-slate-800 border border-slate-700 hover:bg-slate-700 text-slate-300 transition-colors" title="Scan Barcode"><i data-lucide="scan-barcode" class="w-5 h-5"></i></button>
-                            </div>
+                <div class="h-full flex flex-col md:flex-row overflow-hidden relative fade-in">
+                    <!-- Left: Products Section -->
+                    <div class="flex-1 flex flex-col overflow-hidden h-full">
+                        <!-- Search & Filters -->
+                        <div class="p-4 md:p-6 pb-2">
+                             <div class="flex items-center gap-3">
+                                <div class="relative flex-1 group">
+                                    <i data-lucide="search" class="absolute left-3 top-3 text-slate-400 group-focus-within:text-indigo-400 transition-colors w-5 h-5"></i>
+                                    <input type="text" id="pos-search" placeholder="${app.t('search_product_placeholder')}" 
+                                        class="w-full bg-slate-900/40 border border-slate-700/50 rounded-2xl pl-10 pr-4 py-3 text-white focus:outline-none focus:border-indigo-500/50 transition-all shadow-inner backdrop-blur-md"
+                                        oninput="app.handlers.posSearch(this.value)">
+                                </div>
+                                <button class="md:hidden p-3 rounded-2xl bg-indigo-600 text-white shadow-lg shadow-indigo-500/20 relative" onclick="app.handlers.toggleMobileCart()">
+                                    <i data-lucide="shopping-cart" class="w-6 h-6"></i>
+                                    <span id="mobile-cart-badge" class="absolute -top-1 -right-1 bg-pink-500 text-[10px] font-bold px-1.5 py-0.5 rounded-full border-2 border-slate-900">${app.state.cart.length}</span>
+                                </button>
+                             </div>
                         </div>
 
-                        <div id="product-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 overflow-y-auto pr-2 pb-20 custom-scrollbar">
+                        <!-- Product Grid -->
+                        <div id="product-grid" class="flex-1 overflow-y-auto px-4 md:px-6 pb-24 md:pb-6 grid grid-cols-2 lg:grid-cols-4 gap-4 custom-scrollbar">
                             ${app.components.renderProductGrid(products)}
                         </div>
                     </div>
 
-                    <!-- Right: Cart -->
-                    <div class="w-full md:w-96 glass-card rounded-2xl flex flex-col h-full overflow-hidden border border-slate-700/50 shadow-2xl relative">
-                        <div class="p-4 border-b border-slate-700/50 bg-slate-800/30 backdrop-blur-md">
-                            <h3 class="font-bold text-lg flex items-center justify-between text-white">
-                                <span class="flex items-center gap-2"><i data-lucide="shopping-cart" class="w-5 h-5 text-indigo-400"></i> ${app.t('pos_title')}</span>
-                                <span class="text-xs bg-indigo-500/20 text-indigo-300 px-2 py-0.5 rounded-full border border-indigo-500/20">${app.state.cart.length} Items</span>
-                            </h3>
+                    <!-- Right: Cart Section (Desktop Sidebar / Mobile Drawer) -->
+                    <div id="pos-cart-container" class="w-full md:w-96 flex flex-col h-full bg-slate-900/95 md:bg-transparent border-l border-slate-700/50 shadow-2xl transition-all duration-300 transform fixed md:static inset-y-0 right-0 z-40 ${app.state.isCartOpen ? 'translate-x-0' : 'translate-x-full md:translate-x-0'}">
+                        <!-- Drawer Header (Mobile only) -->
+                        <div class="md:hidden p-4 border-b border-slate-800 flex justify-between items-center">
+                            <h3 class="font-bold text-white flex items-center gap-2"><i data-lucide="shopping-cart" class="w-5 h-5 text-indigo-400"></i> ${app.t('pos_title')}</h3>
+                            <button onclick="app.handlers.toggleMobileCart()" class="text-slate-400 hover:text-white"><i data-lucide="chevron-right" class="w-6 h-6"></i></button>
                         </div>
                         
-                        <div id="cart-items" class="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar">
-                            <!-- Cart Items Rendered Here -->
-                            ${app.state.cart.length === 0 ? `
-                                <div class="h-full flex flex-col items-center justify-center text-slate-500 opacity-60">
-                                    <div class="p-4 bg-slate-800/50 rounded-full mb-3">
-                                        <i data-lucide="shopping-cart" class="w-8 h-8 text-slate-400"></i>
-                                    </div>
-                                    <p>${app.t('cart_empty')}</p>
-                                    <p class="text-xs mt-1">Select items to start sale</p>
-                                </div>
-                            ` : ''}
+                        <div class="hidden md:block p-6 pb-2">
+                             <h3 class="font-bold text-xl flex items-center justify-between text-white">
+                                <span class="flex items-center gap-2 italic tracking-tight"><i data-lucide="shopping-bag" class="w-6 h-6 text-indigo-400"></i> ${app.t('pos_title')}</span>
+                             </h3>
                         </div>
 
-                        <div class="p-4 bg-slate-900/80 border-t border-slate-700/50 space-y-3 backdrop-blur-xl z-20">
-                            <div class="space-y-2 pb-3 border-b border-slate-700/50">
+                        <!-- Cart Items Container -->
+                        <div id="cart-items-wrapper" class="flex-1 overflow-y-auto p-4 md:p-6 space-y-3 custom-scrollbar">
+                             <div id="cart-items" class="space-y-3">
+                                <!-- Items injected here -->
+                             </div>
+                        </div>
+
+                        <!-- Cart Totals & Actions -->
+                        <div class="p-6 bg-slate-950/90 border-t border-slate-700/50 space-y-4 backdrop-blur-xl">
+                            <div class="space-y-2 pb-4 border-b border-white/5">
                                 <div class="flex justify-between text-sm">
                                     <span class="text-slate-400">${app.t('cart_subtotal')}</span>
-                                    <span id="cart-subtotal" class="font-mono text-white">0.00</span>
+                                    <span id="cart-subtotal" class="font-mono font-bold text-white">0.00</span>
                                 </div>
                                 <div class="flex justify-between items-center text-sm">
-                                    <span class="text-slate-400 flex items-center gap-1"><i data-lucide="ticket" class="w-3 h-3"></i> ${app.t('cart_discount')}</span>
+                                    <span class="text-slate-400 flex items-center gap-1"><i data-lucide="ticket" class="w-3.5 h-3.5"></i> ${app.t('cart_discount')}</span>
                                     <input type="number" id="cart-discount" value="0" min="0" 
-                                        class="w-24 bg-slate-800 border border-slate-600 rounded px-2 py-1 text-right text-white focus:outline-none focus:border-indigo-500 transition-colors text-xs"
+                                        class="w-24 bg-slate-900/50 border border-slate-700 rounded-lg px-3 py-1.5 text-right text-white focus:outline-none focus:border-indigo-500 transition-colors font-mono"
                                         onchange="app.handlers.updateCartTotals()">
                                 </div>
                             </div>
 
-                            <div class="grid grid-cols-2 gap-3 text-sm">
+                            <div class="grid grid-cols-2 gap-4 text-xs">
                                 <div>
-                                    <label class="text-slate-500 text-[10px] uppercase font-bold tracking-wider mb-1 block">${app.t('cart_customer')}</label>
-                                    <div class="relative">
-                                        <select id="pos-customer" class="w-full bg-slate-800 border border-slate-600 rounded-lg px-2 py-2 text-white text-xs focus:outline-none focus:border-indigo-500 appearance-none">
+                                    <label class="text-slate-500 uppercase font-black tracking-widest mb-1.5 block ml-1">${app.t('cart_customer')}</label>
+                                    <div class="relative group">
+                                        <select id="pos-customer" class="w-full bg-slate-900 border border-slate-700/50 rounded-xl px-3 py-3 text-white focus:outline-none focus:border-indigo-500 appearance-none transition-all cursor-pointer">
                                             <option value="">${app.t('walk_in_customer')}</option>
                                             ${customers.map(c => `<option value="${c.id}">${c.name}</option>`).join('')}
                                         </select>
-                                        <i data-lucide="chevron-down" class="absolute right-2 top-2.5 w-3 h-3 text-slate-400 pointer-events-none"></i>
+                                        <i data-lucide="chevron-down" class="absolute right-3 top-3.5 w-4 h-4 text-slate-500 group-hover:text-indigo-400 pointer-events-none transition-colors"></i>
                                     </div>
                                 </div>
                                 <div>
-                                    <label class="text-slate-500 text-[10px] uppercase font-bold tracking-wider mb-1 block">${app.t('cart_payment')}</label>
-                                    <div class="relative">
-                                        <select id="pos-payment" class="w-full bg-slate-800 border border-slate-600 rounded-lg px-2 py-2 text-white text-xs focus:outline-none focus:border-indigo-500 appearance-none">
+                                    <label class="text-slate-500 uppercase font-black tracking-widest mb-1.5 block ml-1">${app.t('cart_payment')}</label>
+                                    <div class="relative group">
+                                        <select id="pos-payment" class="w-full bg-slate-900 border border-slate-700/50 rounded-xl px-3 py-3 text-white focus:outline-none focus:border-indigo-500 appearance-none transition-all cursor-pointer">
                                             <option value="cash">${app.t('pay_cash')}</option>
                                             <option value="card">${app.t('pay_card')}</option>
                                             <option value="credit">${app.t('pay_credit')}</option>
                                         </select>
-                                        <i data-lucide="chevron-down" class="absolute right-2 top-2.5 w-3 h-3 text-slate-400 pointer-events-none"></i>
+                                        <i data-lucide="chevron-down" class="absolute right-3 top-3.5 w-4 h-4 text-slate-500 group-hover:text-indigo-400 pointer-events-none transition-colors"></i>
                                     </div>
                                 </div>
                             </div>
 
-                            <div class="flex justify-between items-end pt-2">
-                                <span class="text-slate-400 font-medium">${app.t('cart_total')}</span>
-                                <span id="cart-total" class="text-2xl font-bold bg-gradient-to-r from-emerald-400 to-teal-500 bg-clip-text text-transparent">0.00</span>
+                            <div class="flex justify-between items-center pt-2">
+                                <span class="text-slate-500 font-bold uppercase tracking-tighter text-sm">${app.t('cart_total')}</span>
+                                <span id="cart-total" class="text-3xl font-black text-emerald-400 tracking-tighter">LKR 0.00</span>
                             </div>
 
-                            <button onclick="app.handlers.checkout()" class="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold py-3.5 rounded-xl transition-all shadow-lg shadow-indigo-500/20 hover:shadow-indigo-500/40 hover:-translate-y-0.5 active:translate-y-0 flex justify-center items-center gap-2 mt-2 group">
-                                <i data-lucide="printer" class="w-5 h-5 group-hover:scale-110 transition-transform"></i> ${app.t('checkout_btn')}
+                            <button onclick="app.handlers.completeSale()" 
+                                class="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-black py-4 rounded-2xl transition-all shadow-xl shadow-indigo-500/20 active:scale-[0.98] flex items-center justify-center gap-3">
+                                <i data-lucide="check-circle" class="w-6 h-6"></i>
+                                ${app.t('checkout_btn')}
                             </button>
                         </div>
                     </div>
+
+                    <!-- Mobile Cart Overlay -->
+                    <div id="cart-overlay" onclick="app.handlers.toggleMobileCart()" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-30 transition-opacity flex md:hidden ${app.state.isCartOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}"></div>
                 </div>
             `;
 
-            // Re-render cart if state exists
-            if (app.state.cart.length > 0) {
-                app.components.renderCart();
-            }
+            // Re-render cart items
+            app.components.renderCart();
+
+            // Re-initialize icons
+            lucide.createIcons();
 
             // Restore UI state from pending edit if set
             if (app.state.pendingEdit) {
@@ -915,14 +926,15 @@ const app = {
                             <table class="w-full text-left text-sm text-slate-400">
                                 <thead class="bg-slate-800 text-slate-200 uppercase text-xs sticky top-0">
                                     <tr>
-                                        <th class="px-6 py-3">${app.t('th_code')}</th>
+                                        <th class="px-6 py-3 hidden md:table-cell">${app.t('th_code')}</th>
                                         <th class="px-6 py-3">${app.t('th_name')}</th>
-                                        <th class="px-6 py-3">${app.t('th_category')}</th>
+                                        <th class="px-6 py-3 hidden lg:table-cell">${app.t('th_category')}</th>
                                         <th class="px-6 py-3 text-right">${app.t('th_stock')}</th>
-                                        <th class="px-6 py-3 text-right">${app.t('th_wholesale')}</th>
+                                        <th class="px-6 py-3 text-right hidden md:table-cell">${app.t('th_wholesale')}</th>
                                         <th class="px-6 py-3 text-right">${app.t('th_retail')}</th>
                                         <th class="px-6 py-3 text-center">${app.t('th_actions')}</th>
                                     </tr>
+
                                 </thead>
                                 <tbody id="inventory-table-body" class="divide-y divide-slate-700">
                                     ${app.components.renderInventoryRows(products)}
@@ -1264,12 +1276,13 @@ const app = {
             if (products.length === 0) return `<tr><td colspan="7" class="p-8 text-center text-slate-500">${app.t('no_products')}</td></tr>`;
             return products.map(p => `
                 <tr class="hover:bg-slate-700/30 transition-colors group">
-                    <td class="px-6 py-4 font-mono text-xs text-slate-400 group-hover:text-indigo-400 transition-colors">${p.code || '-'}</td>
+                    <td class="px-6 py-4 font-mono text-xs text-slate-400 group-hover:text-indigo-400 transition-colors hidden md:table-cell">${p.code || '-'}</td>
                     <td class="px-6 py-4 font-medium text-white">${p.name}</td>
-                    <td class="px-6 py-4"><span class="px-2.5 py-1 rounded-full bg-slate-800 border border-slate-700 text-xs text-slate-400">${p.category}</span></td>
-                    <td class="px-6 py-4 text-right font-bold ${p.stockCount < 10 ? 'text-rose-400' : 'text-emerald-400'}">${p.stockCount} <span class="text-[10px] text-slate-500 font-normal uppercase ml-1">${app.translations[app.state.language]['unit_' + p.unit] || p.unit}</span></td>
-                    <td class="px-6 py-4 text-right text-slate-400 font-mono text-xs">${p.wholesalePrice.toLocaleString()}</td>
+                    <td class="px-6 py-4 hidden lg:table-cell"><span class="px-2.5 py-1 rounded-full bg-slate-800 border border-slate-700 text-xs text-slate-400">${p.category}</span></td>
+                    <td class="px-6 py-4 text-right font-bold ${p.stockCount < 10 ? 'text-rose-400' : 'text-emerald-400'}">${p.stockCount} <span class="text-[10px] text-slate-500 font-normal uppercase ml-1 md:inline hidden">${app.translations[app.state.language]['unit_' + p.unit] || p.unit}</span></td>
+                    <td class="px-6 py-4 text-right text-slate-400 font-mono text-xs hidden md:table-cell">${p.wholesalePrice.toLocaleString()}</td>
                     <td class="px-6 py-4 text-right font-bold text-slate-200 font-mono">${p.retailPrice.toLocaleString()}</td>
+
                     <td class="px-6 py-4 text-center">
                         <div class="flex items-center justify-center gap-2 opacity-60 group-hover:opacity-100 transition-opacity">
                             <button onclick="app.handlers.editProduct(${p.id})" class="text-indigo-400 hover:text-white p-2 hover:bg-indigo-600 rounded-lg transition-all" title="Edit"><i data-lucide="edit-2" class="w-4 h-4"></i></button>
@@ -1323,9 +1336,14 @@ const app = {
                 </div>
             `).join('');
 
+            // Update mobile badge
+            const badge = document.getElementById('mobile-cart-badge');
+            if (badge) badge.innerText = app.state.cart.length;
+
             lucide.createIcons();
             app.handlers.updateCartTotals();
         },
+
 
         renderReceiptPreview: (s) => {
             return `
@@ -1424,16 +1442,28 @@ const app = {
             lucide.createIcons();
         },
 
-        inventorySearch: async (query) => {
-            const products = await db.products.toArray();
-            const filtered = products.filter(p =>
-                p.name.toLowerCase().includes(query.toLowerCase()) ||
-                (p.code && p.code.toLowerCase().includes(query.toLowerCase())) ||
-                p.category.toLowerCase().includes(query.toLowerCase())
-            );
-            document.getElementById('inventory-table-body').innerHTML = app.components.renderInventoryRows(filtered);
-            lucide.createIcons();
+        inventorySearch: (query) => {
+            app.state.searchQuery = query.toLowerCase();
+            app.handlers.refreshInventoryTable();
         },
+
+        toggleMobileCart: () => {
+            app.state.isCartOpen = !app.state.isCartOpen;
+            const cart = document.getElementById('pos-cart-container');
+            const overlay = document.getElementById('cart-overlay');
+            if (cart) {
+                if (app.state.isCartOpen) {
+                    cart.classList.remove('translate-x-full');
+                    overlay.classList.remove('opacity-0', 'pointer-events-none');
+                    overlay.classList.add('opacity-100');
+                } else {
+                    cart.classList.add('translate-x-full');
+                    overlay.classList.add('opacity-0', 'pointer-events-none');
+                    overlay.classList.remove('opacity-100');
+                }
+            }
+        },
+
 
         addToCart: async (id) => {
             const product = await db.products.get(id);
