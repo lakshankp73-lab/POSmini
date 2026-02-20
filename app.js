@@ -17,7 +17,7 @@ db.version(2).stores({
     products: '++id, name, category, wholesalePrice, retailPrice, stockCount, unit, code, type'
 }).upgrade(tx => {
     return tx.products.toCollection().modify(p => {
-        if (!p.type) p.type = 'resale'; // Default to resale
+        if (!p.type) p.type = 'resale';
     });
 });
 
@@ -315,16 +315,25 @@ const app = {
     toggleSidebar: () => {
         const sidebar = document.getElementById('main-sidebar');
         const overlay = document.getElementById('sidebar-overlay');
+        if (!sidebar) return;
+
         app.state.isSidebarOpen = !app.state.isSidebarOpen;
 
         if (app.state.isSidebarOpen) {
             sidebar.classList.remove('-translate-x-full');
-            overlay.style.display = 'block';
+            if (overlay) {
+                overlay.style.display = 'block';
+                setTimeout(() => overlay.classList.replace('opacity-0', 'opacity-100'), 10);
+            }
         } else {
             sidebar.classList.add('-translate-x-full');
-            overlay.style.display = 'none';
+            if (overlay) {
+                overlay.classList.replace('opacity-100', 'opacity-0');
+                setTimeout(() => overlay.style.display = 'none', 300);
+            }
         }
     },
+
 
     confirm: (options) => {
         return new Promise((resolve) => {
@@ -524,9 +533,10 @@ const app = {
         }
 
         // Close sidebar on mobile after navigation
-        if (window.innerWidth < 768 && app.state.isSidebarOpen) {
+        if (window.innerWidth < 1024 && app.state.isSidebarOpen) {
             app.toggleSidebar();
         }
+
 
         app.updateThemeUI();
 
@@ -866,13 +876,14 @@ const app = {
                                 <span id="cart-total" class="text-3xl font-black text-emerald-400 tracking-tighter">LKR 0.00</span>
                             </div>
 
-                            <button onclick="app.handlers.completeSale()" 
+                            <button onclick="app.handlers.checkout()" 
                                 class="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-black py-4 rounded-2xl transition-all shadow-xl shadow-indigo-500/20 active:scale-[0.98] flex items-center justify-center gap-3">
                                 <i data-lucide="check-circle" class="w-6 h-6"></i>
                                 ${app.t('checkout_btn')}
                             </button>
                         </div>
                     </div>
+
 
                     <!-- Mobile Cart Overlay -->
                     <div id="cart-overlay" onclick="app.handlers.toggleMobileCart()" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-30 transition-opacity flex md:hidden ${app.state.isCartOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}"></div>

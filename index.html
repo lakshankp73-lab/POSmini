@@ -8,11 +8,8 @@
     <link rel="manifest" href="manifest.json">
 
 
-    <!-- Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Internal:wght@300;400;500;600;700&display=swap"
-        rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
     <style>
         /* Mobile safe height */
         :root {
@@ -392,12 +389,15 @@
 
     <!-- Sidebar Overlay (Mobile) -->
     <div id="sidebar-overlay" onclick="app.toggleSidebar()"
-        class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[9] hidden md:hidden transition-opacity"></div>
+        class="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 hidden lg:hidden opacity-0 transition-opacity duration-300">
+    </div>
+
 
     <!-- Sidebar -->
 
     <aside id="main-sidebar"
-        class="w-64 glass h-full flex flex-col justify-between border-r border-slate-700/50 z-10 transition-all duration-300 transform md:translate-x-0 -translate-x-full md:static fixed">
+        class="w-64 glass h-full flex flex-col justify-between border-r border-slate-700/50 z-50 transition-all duration-300 transform lg:translate-x-0 -translate-x-full lg:static fixed">
+
         <div>
             <div class="p-6 flex items-center justify-center border-b border-slate-700/30">
                 <div class="flex items-center gap-3">
@@ -497,7 +497,8 @@
     </aside>
 
     <!-- Main Content -->
-    <main class="flex-1 flex flex-col h-full overflow-hidden relative">
+    <main class="flex-1 flex flex-col h-full overflow-hidden relative z-10">
+
         <!-- Header for Mobile Toggle -->
         <header class="md:hidden flex items-center justify-between px-6 py-4 glass border-b border-white/10 shadow-lg">
             <div class="flex items-center gap-2">
