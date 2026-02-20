@@ -1,7 +1,12 @@
-/**
- * POSmini - Hardware Point of Sale System
- * Built with HTML, CSS, JS, Tailwind, Dexie.js
- */
+const db = new Dexie('HardwareDB');
+// Define versions in order
+db.version(2).stores({
+    products: '++id, name, category, wholesalePrice, retailPrice, stockCount, unit, code, type'
+}).upgrade(tx => {
+    return tx.products.toCollection().modify(p => {
+        if (!p.type) p.type = 'resale';
+    });
+});
 
 db.version(3).stores({
     products: '++id, name, category, wholesalePrice, retailPrice, stockCount, unit, code, type',
@@ -12,15 +17,6 @@ db.version(3).stores({
     notes: '++id, title, content, date'
 });
 
-
-// Upgrade handling for existing version 1 users
-db.version(2).stores({
-    products: '++id, name, category, wholesalePrice, retailPrice, stockCount, unit, code, type'
-}).upgrade(tx => {
-    return tx.products.toCollection().modify(p => {
-        if (!p.type) p.type = 'resale';
-    });
-});
 
 
 const app = {
@@ -141,7 +137,20 @@ const app = {
             unit_cube: "Cubes",
             unit_can: "Cans",
 
+            pay_cash: "Cash",
+            pay_card: "Card",
+            pay_credit: "Credit",
+            unit_pcs: "pcs",
+            unit_kg: "kg",
+            unit_m: "m",
+            unit_l: "l",
+            unit_bag: "bag",
+            unit_cube: "cube",
+            unit_can: "can",
+            loading: "Loading...",
+
             // Errors & Toasts
+
             err_cart_empty: "Cart is empty!",
             err_select_cust_credit: "Please select a customer for Credit sales!",
             toast_cust_added: "Customer Added!",
