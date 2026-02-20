@@ -317,16 +317,20 @@ const app = {
         const overlay = document.getElementById('sidebar-overlay');
         if (!sidebar) return;
 
-        app.state.isSidebarOpen = !app.state.isSidebarOpen;
+        const isOpen = !sidebar.classList.contains('-translate-x-full');
 
-        if (app.state.isSidebarOpen) {
+        if (!isOpen) {
+            // Opening
             sidebar.classList.remove('-translate-x-full');
+            app.state.isSidebarOpen = true;
             if (overlay) {
                 overlay.style.display = 'block';
                 setTimeout(() => overlay.classList.replace('opacity-0', 'opacity-100'), 10);
             }
         } else {
+            // Closing
             sidebar.classList.add('-translate-x-full');
+            app.state.isSidebarOpen = false;
             if (overlay) {
                 overlay.classList.replace('opacity-100', 'opacity-0');
                 setTimeout(() => overlay.style.display = 'none', 300);
@@ -533,9 +537,10 @@ const app = {
         }
 
         // Close sidebar on mobile after navigation
-        if (window.innerWidth < 1024 && app.state.isSidebarOpen) {
+        if (window.innerWidth < 768 && !document.getElementById('main-sidebar').classList.contains('-translate-x-full')) {
             app.toggleSidebar();
         }
+
 
 
         app.updateThemeUI();

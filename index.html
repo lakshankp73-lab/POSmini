@@ -389,14 +389,17 @@
 
     <!-- Sidebar Overlay (Mobile) -->
     <div id="sidebar-overlay" onclick="app.toggleSidebar()"
-        class="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 hidden lg:hidden opacity-0 transition-opacity duration-300">
+        class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60] hidden md:hidden opacity-0 transition-opacity duration-300">
+    </div>
+
     </div>
 
 
     <!-- Sidebar -->
 
     <aside id="main-sidebar"
-        class="w-64 glass h-full flex flex-col justify-between border-r border-slate-700/50 z-50 transition-all duration-300 transform lg:translate-x-0 -translate-x-full lg:static fixed">
+        class="w-64 glass h-full flex flex-col justify-between border-r border-slate-700/50 z-[70] transition-all duration-300 transform md:translate-x-0 -translate-x-full md:static fixed">
+
 
         <div>
             <div class="p-6 flex items-center justify-center border-b border-slate-700/30">
@@ -413,41 +416,49 @@
             </div>
 
             <nav class="mt-8 px-4 space-y-2">
-                <button onclick="app.navigate('dashboard')" id="nav-dashboard"
-                    class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all text-slate-400 hover:bg-white/5 hover:text-white group">
-                    <i data-lucide="layout-dashboard" class="w-5 h-5 group-hover:scale-110 transition-transform"></i>
-                    <span class="font-semibold text-sm tracking-wide">Dashboard</span>
+                <button type="button" onclick="app.navigate('dashboard')" id="nav-dashboard"
+                    class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all text-slate-400 hover:bg-white/5 hover:text-white group cursor-pointer active:scale-95">
+                    <i data-lucide="layout-dashboard"
+                        class="w-5 h-5 group-hover:scale-110 transition-transform pointer-events-none"></i>
+                    <span class="font-semibold text-sm tracking-wide pointer-events-none">Dashboard</span>
                 </button>
-                <button onclick="app.navigate('pos')" id="nav-pos"
-                    class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all text-slate-400 hover:bg-white/5 hover:text-white group">
-                    <i data-lucide="shopping-cart" class="w-5 h-5 group-hover:scale-110 transition-transform"></i>
-                    <span class="font-semibold text-sm tracking-wide">POS / Sales</span>
+                <button type="button" onclick="app.navigate('pos')" id="nav-pos"
+                    class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all text-slate-400 hover:bg-white/5 hover:text-white group cursor-pointer active:scale-95">
+                    <i data-lucide="shopping-cart"
+                        class="w-5 h-5 group-hover:scale-110 transition-transform pointer-events-none"></i>
+                    <span class="font-semibold text-sm tracking-wide pointer-events-none">POS / Sales</span>
                 </button>
-                <button onclick="app.navigate('inventory')" id="nav-inventory"
-                    class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all text-slate-400 hover:bg-white/5 hover:text-white group">
-                    <i data-lucide="package" class="w-5 h-5 group-hover:scale-110 transition-transform"></i>
-                    <span class="font-semibold text-sm tracking-wide">Inventory</span>
+                <button type="button" onclick="app.navigate('inventory')" id="nav-inventory"
+                    class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all text-slate-400 hover:bg-white/5 hover:text-white group cursor-pointer active:scale-95">
+                    <i data-lucide="package"
+                        class="w-5 h-5 group-hover:scale-110 transition-transform pointer-events-none"></i>
+                    <span class="font-semibold text-sm tracking-wide pointer-events-none">Inventory</span>
                 </button>
-                <button onclick="app.navigate('customers')" id="nav-customers"
-                    class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all text-slate-400 hover:bg-white/5 hover:text-white group">
-                    <i data-lucide="users" class="w-5 h-5 group-hover:scale-110 transition-transform"></i>
-                    <span class="font-semibold text-sm tracking-wide">Customers</span>
+                <button type="button" onclick="app.navigate('customers')" id="nav-customers"
+                    class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all text-slate-400 hover:bg-white/5 hover:text-white group cursor-pointer active:scale-95">
+                    <i data-lucide="users"
+                        class="w-5 h-5 group-hover:scale-110 transition-transform pointer-events-none"></i>
+                    <span class="font-semibold text-sm tracking-wide pointer-events-none">Customers</span>
                 </button>
-                <button onclick="app.navigate('suppliers')" id="nav-suppliers"
-                    class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all text-slate-400 hover:bg-white/5 hover:text-white group">
-                    <i data-lucide="truck" class="w-5 h-5 group-hover:scale-110 transition-transform"></i>
-                    <span class="font-semibold text-sm tracking-wide">Suppliers</span>
+                <button type="button" onclick="app.navigate('suppliers')" id="nav-suppliers"
+                    class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all text-slate-400 hover:bg-white/5 hover:text-white group cursor-pointer active:scale-95">
+                    <i data-lucide="truck"
+                        class="w-5 h-5 group-hover:scale-110 transition-transform pointer-events-none"></i>
+                    <span class="font-semibold text-sm tracking-wide pointer-events-none">Suppliers</span>
                 </button>
-                <button onclick="app.navigate('reports')" id="nav-reports"
-                    class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all text-slate-400 hover:bg-white/5 hover:text-white group">
-                    <i data-lucide="history" class="w-5 h-5 group-hover:scale-110 transition-transform"></i>
-                    <span class="font-semibold text-sm tracking-wide">History</span>
+                <button type="button" onclick="app.navigate('reports')" id="nav-reports"
+                    class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all text-slate-400 hover:bg-white/5 hover:text-white group cursor-pointer active:scale-95">
+                    <i data-lucide="history"
+                        class="w-5 h-5 group-hover:scale-110 transition-transform pointer-events-none"></i>
+                    <span class="font-semibold text-sm tracking-wide pointer-events-none">History</span>
                 </button>
-                <button onclick="app.navigate('settings')" id="nav-settings"
-                    class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all text-slate-400 hover:bg-white/5 hover:text-white group">
-                    <i data-lucide="settings" class="w-5 h-5 group-hover:scale-110 transition-transform"></i>
-                    <span class="font-semibold text-sm tracking-wide">Settings</span>
+                <button type="button" onclick="app.navigate('settings')" id="nav-settings"
+                    class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all text-slate-400 hover:bg-white/5 hover:text-white group cursor-pointer active:scale-95">
+                    <i data-lucide="settings"
+                        class="w-5 h-5 group-hover:scale-110 transition-transform pointer-events-none"></i>
+                    <span class="font-semibold text-sm tracking-wide pointer-events-none">Settings</span>
                 </button>
+
             </nav>
         </div>
 
