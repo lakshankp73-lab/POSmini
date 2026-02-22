@@ -190,7 +190,10 @@ const app = {
             search_order_id: "Enter Order Number (#)...",
             no_order_found: "Order not found. Check the ID.",
             return_items_btn: "Confirm Return & Refund",
-            total_refund: "Total Refund Amount"
+            total_refund: "Total Refund Amount",
+            nav_lakshan: "Lakshan",
+            lakshan_welcome: "Welcome to Lakshan's Space",
+            lakshan_desc: "This is a dedicated place for the creator.",
 
         },
 
@@ -339,7 +342,10 @@ const app = {
             search_order_id: "ඇණවුම් අංකය ඇතුළත් කරන්න (#)...",
             no_order_found: "ඇණවුම හමු නොවීය. අංකය පරීක්ෂා කරන්න.",
             return_items_btn: "ආපසු ලබාගැනීම ස්ථිර කරන්න",
-            total_refund: "ආපසු ගෙවිය යුතු මුළු මුදල"
+            total_refund: "ආපසු ගෙවිය යුතු මුළු මුදල",
+            nav_lakshan: "ලක්ෂාන්",
+            lakshan_welcome: "ලක්ෂාන්ගේ අංශයට සාදරයෙන් පිළිගනිමු",
+            lakshan_desc: "මෙය නිර්මාණකරු සඳහා වෙන් වූ විශේෂ ස්ථානයකි.",
         }
 
     },
@@ -520,6 +526,8 @@ const app = {
         document.querySelector('#nav-reports span').innerText = app.t('nav_history');
         const navReturn = document.querySelector('#nav-return span');
         if (navReturn) navReturn.innerText = app.t('nav_return');
+        const navLakshan = document.querySelector('#nav-lakshan span');
+        if (navLakshan) navLakshan.innerText = app.t('nav_lakshan');
         document.querySelector('#nav-settings span').innerText = app.t('nav_settings');
 
         // Update Sidebar Footer buttons
@@ -614,6 +622,7 @@ const app = {
                         case 'reports': await app.views.reports(container); break;
                         case 'return': await app.views.return(container); break;
                         case 'notes': await app.views.notes(container); break;
+                        case 'lakshan': await app.views.lakshan(container); break;
                         case 'settings': await app.views.settings(container); break;
 
                     }
@@ -1426,6 +1435,66 @@ const app = {
                     </div>
                 </div>
             `;
+        },
+        lakshan: async (container) => {
+            container.innerHTML = `
+                <div class="p-8 fade-in h-full flex flex-col items-center justify-center text-center">
+                    <div class="glass-card p-12 rounded-[3rem] border border-white/10 shadow-2xl relative overflow-hidden group max-w-2xl">
+                        <!-- Decorative background -->
+                        <div class="absolute -right-20 -top-20 w-64 h-64 bg-indigo-500/10 rounded-full blur-3xl group-hover:bg-indigo-500/20 transition-all duration-700"></div>
+                        <div class="absolute -left-20 -bottom-20 w-64 h-64 bg-pink-500/10 rounded-full blur-3xl group-hover:bg-pink-500/20 transition-all duration-700"></div>
+                        
+                        <div class="relative z-10">
+                            <div class="w-32 h-32 mx-auto mb-8 p-1 bg-gradient-to-tr from-indigo-500 via-purple-500 to-pink-500 rounded-full overflow-hidden shadow-2xl transform group-hover:scale-110 transition-transform duration-500">
+                                <div class="w-full h-full bg-slate-900 rounded-full flex items-center justify-center">
+                                    <i data-lucide="user" class="w-16 h-16 text-white"></i>
+                                </div>
+                            </div>
+                            
+                            <h2 class="text-5xl font-black bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-500 bg-clip-text text-transparent glow-text tracking-tighter mb-4">
+                                ${app.t('nav_lakshan')}
+                            </h2>
+                            
+                            <p class="text-2xl font-bold text-white mb-6 italic opacity-90">
+                                ${app.t('lakshan_welcome')}
+                            </p>
+                            
+                            <div class="h-1 w-24 mx-auto bg-gradient-to-r from-indigo-500 to-pink-500 rounded-full mb-8"></div>
+                            
+                            <p class="text-slate-400 text-lg leading-relaxed max-w-md mx-auto mb-8 font-medium">
+                                ${app.t('lakshan_desc')}
+                            </p>
+                            
+                            <div class="flex justify-center gap-6">
+                                <div class="flex flex-col items-center">
+                                    <div class="p-4 bg-slate-800/50 rounded-2xl border border-white/5 mb-2 hover:border-indigo-500/50 transition-colors">
+                                        <i data-lucide="code-2" class="w-6 h-6 text-indigo-400"></i>
+                                    </div>
+                                    <span class="text-[10px] font-black uppercase tracking-widest text-slate-500">Developer</span>
+                                </div>
+                                <div class="flex flex-col items-center">
+                                    <div class="p-4 bg-slate-800/50 rounded-2xl border border-white/5 mb-2 hover:border-purple-500/50 transition-colors">
+                                        <i data-lucide="palette" class="w-6 h-6 text-purple-400"></i>
+                                    </div>
+                                    <span class="text-[10px] font-black uppercase tracking-widest text-slate-500">Designer</span>
+                                </div>
+                                <div class="flex flex-col items-center">
+                                    <div class="p-4 bg-slate-800/50 rounded-2xl border border-white/5 mb-2 hover:border-pink-500/50 transition-colors">
+                                        <i data-lucide="rocket" class="w-6 h-6 text-pink-400"></i>
+                                    </div>
+                                    <span class="text-[10px] font-black uppercase tracking-widest text-slate-500">Creator</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <button onclick="app.navigate('dashboard')" class="mt-12 flex items-center gap-2 text-slate-500 hover:text-white transition-colors font-bold uppercase tracking-widest text-xs">
+                        <i data-lucide="arrow-left" class="w-4 h-4"></i>
+                        Back to Dashboard
+                    </button>
+                </div>
+            `;
+            lucide.createIcons();
         }
     },
 
