@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RESmini - Restaurant POS System</title>
+    <link rel="manifest" href="manifest.json">
+
+
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        /* Mobile safe height */
+        :root {
+            --app-height: 100%;
+        }
+
+        html,
+        body {
+            height: var(--app-height);
+            overscroll-behavior: none;
+        }
+    </style>
+
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Outfit', 'sans-serif'],
+                    },
+                    colors: {
+                        primary: '#6366f1', // Indigo 500
+                        secondary: '#ec4899', // Pink 500
+                        dark: '#0f172a', // Slate 900
+                        surface: '#1e293b', // Slate 800
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- Custom Styles for Print and Glassmorphism -->
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-glow: rgba(99, 102, 241, 0.5);
+            --secondary: #ec4899;
+            --secondary-glow: rgba(236, 72, 153, 0.5);
+            --surface: rgba(30, 41, 59, 0.4);
+            --border: rgba(255, 255, 255, 0.08);
+            --text-main: #e2e8f0;
+            --text-dim: #94a3b8;
+        }
+
+        body {
+            background-color: #0b1120;
+            background-image:
+                radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.15) 0px, transparent 50%),
+                radial-gradient(at 100% 0%, rgba(236, 72, 153, 0.15) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(20, 184, 166, 0.15) 0px, transparent 50%);
+            background-attachment: fixed;
+            color: var(--text-main);
+        }
+
+        /* High-End Glassmorphism */
+        .glass {
+            background: var(--surface);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--border);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .glass-card {
+            background: rgba(30, 41, 59, 0.6);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .glass-card:hover {
+            transform: translateY(-4px);
+            border-color: rgba(99, 102, 241, 0.4);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4), 0 0 15px rgba(99, 102, 241, 0.2);
+        }
+
+        /* Animations */
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .fade-in {
+            animation: slideUp 0.5s ease-out forwards;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 5px;
+            height: 5px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(99, 102, 241, 0.3);
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--primary);
+        }
+
+        /* Print Styles Optimized for 58mm Thermal */
+        @media print {
+            @page {
+                margin: 0;
+                size: 58mm auto;
+            }
+
+            body {
+                background: white !important;
+                color: black !important;
+                visibility: hidden;
+            }
+
+            #receipt-print-area {
+                visibility: visible;
+                display: block !important;
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 58mm !important;
+            }
+
+            main,
+            aside,
+            #toast-container {
+                display: none !important;
+            }
+        }
+
+        /* Comprehensive Light Mode Overrides */
+        body.light-mode {
+            --surface: #ffffff;
+            --border: #e2e8f0;
+            --text-main: #0f172a;
+            --text-dim: #64748b;
+            background: #f8fafc !important;
+            /* Pure light background */
+            color: var(--text-main);
+        }
+
+        body.light-mode .glass {
+            background: #ffffff !important;
+            border-color: #e2e8f0 !important;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05) !important;
+            backdrop-filter: none !important;
+        }
+
+        body.light-mode .glass-card {
+            background: #ffffff !important;
+            border-color: #e2e8f0 !important;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05) !important;
+            backdrop-filter: none !important;
+        }
+
+
+        body.light-mode aside {
+            background: #ffffff;
+            border-right: 1px solid rgba(148, 163, 184, 0.2);
+        }
+
+        /* High Contrast Text */
+        body.light-mode .text-slate-100,
+        body.light-mode .text-slate-200,
+        body.light-mode .text-slate-300,
+        body.light-mode .text-white,
+        body.light-mode .text-indigo-200,
+        body.light-mode .text-pink-100 {
+            color: #0f172a !important;
+        }
+
+        body.light-mode .text-slate-400,
+        body.light-mode .text-slate-500 {
+            color: #334155 !important;
+            /* Darker grey for readability */
+        }
+
+        /* Background Overrides */
+        body.light-mode .bg-slate-800,
+        body.light-mode .bg-slate-900,
+        body.light-mode .bg-slate-950,
+        body.light-mode .bg-slate-900\/50,
+        body.light-mode .bg-slate-800\/40,
+        body.light-mode .bg-slate-800\/30,
+        body.light-mode .bg-slate-800\/50,
+        body.light-mode .bg-slate-700\/40,
+        body.light-mode .bg-slate-700\/30 {
+            background-color: #f8fafc !important;
+            /* Extremely light grey/white */
+            border-color: rgba(148, 163, 184, 0.2) !important;
+        }
+
+        body.light-mode .bg-black\/20,
+        body.light-mode .bg-white\/5,
+        body.light-mode .bg-white\/10 {
+            background-color: rgba(226, 232, 240, 0.8) !important;
+        }
+
+        /* Border Overrides */
+        body.light-mode .border-slate-700,
+        body.light-mode .border-slate-800,
+        body.light-mode .border-slate-700\/50,
+        body.light-mode .border-slate-700\/30,
+        body.light-mode .border-white\/5,
+        body.light-mode .border-white\/10 {
+            border-color: rgba(148, 163, 184, 0.3) !important;
+        }
+
+        body.light-mode .divide-slate-700>*+* {
+            border-color: rgba(148, 163, 184, 0.2) !important;
+        }
+
+        /* Navigation Items */
+        body.light-mode .nav-item {
+            color: #475569 !important;
+        }
+
+        body.light-mode .nav-item:hover {
+            background-color: rgba(99, 102, 241, 0.08) !important;
+            color: #6366f1 !important;
+        }
+
+        body.light-mode .nav-item.bg-white\/10 {
+            background-color: #6366f1 !important;
+            color: #ffffff !important;
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2);
+        }
+
+        /* Modals & Inputs */
+        body.light-mode #custom-modal,
+        body.light-mode #product-modal,
+        body.light-mode #customer-modal,
+        body.light-mode #supplier-modal {
+            background: #ffffff !important;
+            color: #0f172a !important;
+            border: 1px solid rgba(148, 163, 184, 0.3) !important;
+        }
+
+        body.light-mode input,
+        body.light-mode select,
+        body.light-mode textarea {
+            background-color: #ffffff !important;
+            color: #0f172a !important;
+            border: 1px solid #cbd5e1 !important;
+        }
+
+        body.light-mode input::placeholder {
+            color: #94a3b8 !important;
+        }
+
+        /* POS and Inventory Specifics */
+        body.light-mode .group:hover .bg-slate-800\/80 {
+            background-color: #ffffff !important;
+        }
+
+        /* Final Polish for Light Mode Contrast */
+        body.light-mode aside,
+        body.light-mode header,
+        body.light-mode footer,
+        body.light-mode .sidebar-footer,
+        body.light-mode .nav-item:not(.bg-white\/10) {
+            background-color: #ffffff !important;
+            color: #0f172a !important;
+        }
+
+        body.light-mode .bg-indigo-600 {
+            background-color: #4f46e5 !important;
+            color: #ffffff !important;
+        }
+
+        body.light-mode .text-slate-400,
+        body.light-mode .text-slate-500,
+        body.light-mode .text-slate-600 {
+            color: #475569 !important;
+            /* Proper slate grey for labels */
+        }
+
+        /* Stop the muddy glass look in light mode */
+        body.light-mode .backdrop-blur-md,
+        body.light-mode .backdrop-blur-sm,
+        body.light-mode .backdrop-blur-lg,
+        body.light-mode .backdrop-blur-xl {
+            backdrop-filter: none !important;
+        }
+
+        body.light-mode .shadow-lg,
+        body.light-mode .shadow-xl,
+        body.light-mode .shadow-2xl {
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03) !important;
+        }
+
+        body.light-mode tr:hover {
+            background-color: #f1f5f9 !important;
+        }
+
+        body.light-mode .bg-indigo-500\/10 {
+            background-color: rgba(99, 102, 241, 0.1) !important;
+        }
+
+        body.light-mode .bg-emerald-500\/10 {
+            background-color: rgba(16, 185, 129, 0.1) !important;
+        }
+
+        /* Glow and Shadow adjustments */
+        body.light-mode .glow-text {
+            text-shadow: none !important;
+        }
+
+        body.light-mode .shadow-indigo-500\/20 {
+            box-shadow: 0 10px 15px -3px rgba(99, 102, 241, 0.1) !important;
+        }
+
+
+        body.light-mode #cart-items div {
+            border-color: #e2e8f0 !important;
+        }
+
+        body.light-mode #dashboard-time {
+            color: #1e293b !important;
+        }
+
+        /* Target all slate text and backgrounds globally in light mode */
+        body.light-mode [class*="text-slate-"],
+        body.light-mode [class*="text-white/"] {
+            color: #334155 !important;
+        }
+
+        body.light-mode [class*="bg-slate-"],
+        body.light-mode [class*="bg-black/"],
+        body.light-mode [class*="bg-slate-900/"] {
+            background-color: #ffffff !important;
+            border-color: #e2e8f0 !important;
+        }
+
+        body.light-mode .text-indigo-400,
+        body.light-mode .text-indigo-300 {
+            color: #4f46e5 !important;
+            /* Slightly darker indigo */
+        }
+
+        body.light-mode .text-emerald-400 {
+            color: #059669 !important;
+            /* Darker emerald */
+        }
+
+        body.light-mode .text-rose-400,
+        body.light-mode .text-red-400 {
+            color: #dc2626 !important;
+        }
+    </style>
+
+</head>
+
+<body class="h-screen w-screen overflow-hidden flex font-sans text-slate-200">
+
+    <!-- Sidebar Overlay (Mobile) -->
+    <div id="sidebar-overlay" onclick="app.toggleSidebar()"
+        class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60] hidden md:hidden opacity-0 transition-opacity duration-300">
+    </div>
+
+
+
+    <!-- Sidebar -->
+
+    <aside id="main-sidebar"
+        class="w-64 glass h-full flex flex-col justify-between border-r border-slate-700/50 z-[70] transition-all duration-300 transform md:translate-x-0 -translate-x-full md:static fixed">
+
+
+        <div>
+            <div class="p-6 flex items-center justify-center border-b border-slate-700/30">
+                <div class="flex items-center gap-3">
+                    <div
+                        class="p-2 bg-gradient-to-br from-orange-500 to-red-500 rounded-xl shadow-lg shadow-orange-500/20">
+                        <i data-lucide="utensils" class="text-white w-6 h-6"></i>
+                    </div>
+                    <div class="flex flex-col">
+                        <h1
+                            class="text-2xl font-black bg-gradient-to-r from-orange-400 to-red-500 bg-clip-text text-transparent italic tracking-tight pr-2">
+                            RESmini</h1>
+                        <span class="text-[8px] font-bold text-slate-500 tracking-widest uppercase -mt-1 ml-0.5">by
+                            LAKSHAN</span>
+                    </div>
+                </div>
+            </div>
+
+            <nav class="mt-8 px-4 space-y-2">
+                <button type="button" onclick="app.navigate('dashboard')" id="nav-dashboard"
+                    class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all text-slate-400 hover:bg-white/5 hover:text-white group active:scale-95 touch-manipulation">
+                    <i data-lucide="layout-dashboard" class="w-5 h-5 group-hover:scale-110 transition-transform"></i>
+                    <span class="font-semibold text-sm tracking-wide">Dashboard</span>
+                </button>
+                <button type="button" onclick="app.navigate('pos')" id="nav-pos"
+                    class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all text-slate-400 hover:bg-white/5 hover:text-white group active:scale-95 touch-manipulation">
+                    <i data-lucide="utensils-crossed" class="w-5 h-5 group-hover:scale-110 transition-transform"></i>
+                    <span class="font-semibold text-sm tracking-wide">Take Order (POS)</span>
+                </button>
+                <button type="button" onclick="app.navigate('inventory')" id="nav-inventory"
+                    class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all text-slate-400 hover:bg-white/5 hover:text-white group active:scale-95 touch-manipulation">
+                    <i data-lucide="book-open" class="w-5 h-5 group-hover:scale-110 transition-transform"></i>
+                    <span class="font-semibold text-sm tracking-wide">Menu Items</span>
+                </button>
+                <button type="button" onclick="app.navigate('customers')" id="nav-customers"
+                    class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all text-slate-400 hover:bg-white/5 hover:text-white group active:scale-95 touch-manipulation">
+                    <i data-lucide="armchair" class="w-5 h-5 group-hover:scale-110 transition-transform"></i>
+                    <span class="font-semibold text-sm tracking-wide">Tables / Guests</span>
+                </button>
+                <button type="button" onclick="app.navigate('suppliers')" id="nav-suppliers"
+                    class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all text-slate-400 hover:bg-white/5 hover:text-white group active:scale-95 touch-manipulation">
+                    <i data-lucide="truck" class="w-5 h-5 group-hover:scale-110 transition-transform"></i>
+                    <span class="font-semibold text-sm tracking-wide">Suppliers</span>
+                </button>
+                <button type="button" onclick="app.navigate('reports')" id="nav-reports"
+                    class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all text-slate-400 hover:bg-white/5 hover:text-white group active:scale-95 touch-manipulation">
+                    <i data-lucide="history" class="w-5 h-5 group-hover:scale-110 transition-transform"></i>
+                    <span class="font-semibold text-sm tracking-wide">History</span>
+                </button>
+                <button type="button" onclick="app.navigate('return')" id="nav-return"
+                    class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all text-slate-400 hover:bg-white/5 hover:text-white group active:scale-95 touch-manipulation">
+                    <i data-lucide="rotate-ccw" class="w-5 h-5 group-hover:scale-110 transition-transform"></i>
+                    <span class="font-semibold text-sm tracking-wide">Returns</span>
+                </button>
+                <button type="button" onclick="app.navigate('notes')" id="nav-notes"
+                    class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all text-slate-400 hover:bg-white/5 hover:text-white group active:scale-95 touch-manipulation">
+                    <i data-lucide="sticky-note" class="w-5 h-5 group-hover:scale-110 transition-transform"></i>
+                    <span class="font-semibold text-sm tracking-wide">Notes</span>
+                </button>
+                <button type="button" onclick="app.navigate('settings')" id="nav-settings"
+                    class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all text-slate-400 hover:bg-white/5 hover:text-white group active:scale-95 touch-manipulation">
+                    <i data-lucide="settings" class="w-5 h-5 group-hover:scale-110 transition-transform"></i>
+                    <span class="font-semibold text-sm tracking-wide">Settings</span>
+                </button>
+            </nav>
+
+        </div>
+
+        <div class="px-6 pb-2">
+            <!-- Theme Toggle Mini -->
+            <button onclick="app.toggleTheme()" id="theme-toggle-sidebar"
+                class="w-full flex items-center justify-between px-4 py-3 rounded-xl bg-slate-900/50 border border-white/5 text-slate-400 hover:text-white transition-all group">
+                <span class="text-xs font-bold uppercase tracking-widest">Theme</span>
+                <div class="flex items-center gap-2">
+                    <i data-lucide="sun" class="w-4 h-4 text-yellow-500 sun-icon"></i>
+                    <i data-lucide="moon" class="w-4 h-4 text-indigo-400 moon-icon"></i>
+                    <div class="w-8 h-4 bg-slate-800 rounded-full relative p-0.5 theme-switch-bg">
+                        <div
+                            class="w-3 h-3 bg-white rounded-full transition-transform transform translate-x-0 theme-switch-dot">
+                        </div>
+                    </div>
+                </div>
+            </button>
+        </div>
+
+
+        <div class="p-6 border-t border-slate-700/30 bg-slate-900/40 backdrop-blur-md">
+            <!-- Language Toggle -->
+            <div class="bg-black/20 p-1.5 rounded-xl flex gap-1 mb-4 border border-white/5">
+                <button onclick="app.toggleLanguage('en')" id="lang-en"
+                    class="flex-1 py-2 rounded-lg text-[10px] font-black uppercase tracking-tighter transition-all">English</button>
+                <button onclick="app.toggleLanguage('si')" id="lang-si"
+                    class="flex-1 py-2 rounded-lg text-[10px] font-black uppercase tracking-tighter transition-all">සිංහල</button>
+            </div>
+
+            <div class="space-y-2">
+                <button id="btn-backup" onclick="app.backupData()"
+                    class="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 transition-colors text-xs font-bold text-slate-200 border border-white/5">
+                    <i data-lucide="download" class="w-4 h-4 text-indigo-400"></i>
+                    Backup Data
+                </button>
+                <button id="btn-restore" onclick="document.getElementById('restore-file').click()"
+                    class="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-white/5 transition-colors text-xs font-bold text-slate-400">
+                    <i data-lucide="upload" class="w-4 h-4 text-pink-400"></i>
+                    Restore Data
+                </button>
+            </div>
+            <input type="file" id="restore-file" class="hidden" accept=".json" onchange="app.restoreData(this)">
+            <div class="mt-4 text-[10px] text-center text-slate-600 font-bold uppercase tracking-widest">v1.2.0 •
+                Premium Edition</div>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 flex flex-col h-full overflow-hidden relative z-10">
+
+        <!-- Header for Mobile Toggle -->
+        <header class="md:hidden flex items-center justify-between px-6 py-4 glass border-b border-white/10 shadow-lg">
+            <div class="flex items-center gap-2">
+                <div class="w-8 h-8 p-1.5 bg-orange-600 rounded-lg"><i data-lucide="utensils"
+                        class="text-white w-full h-full"></i></div>
+                <div class="flex flex-col">
+                    <h1
+                        class="text-xl font-black bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent pr-2 leading-tight">
+                        RESmini</h1>
+                    <span class="text-[7px] font-bold text-slate-400 tracking-widest uppercase -mt-0.5">by
+                        LAKSHAN</span>
+                </div>
+            </div>
+            <div class="flex items-center gap-3">
+                <button onclick="app.toggleTheme()" id="theme-toggle-header"
+                    class="p-2.5 rounded-xl transition-all shadow-xl active:scale-95">
+                    <i data-lucide="sun" class="w-5 h-5"></i>
+                </button>
+                <button class="p-2.5 rounded-xl bg-slate-800 text-white shadow-xl active:scale-95 transition-all"
+                    onclick="app.toggleSidebar()">
+                    <i data-lucide="menu" class="w-6 h-6"></i>
+                </button>
+            </div>
+        </header>
+
+        <!-- Dynamic Views Container -->
+        <div id="app-container" class="flex-1 overflow-auto p-0 relative no-scrollbar">
+            <!-- Views will be injected here by app.js -->
+        </div>
+
+        <!-- Notification Toast -->
+        <div id="toast-container" class="fixed top-6 right-6 z-[100] flex flex-col gap-3 pointer-events-none"></div>
+
+        <!-- Custom Confirmation Modal (Premium) -->
+        <div id="custom-modal-container"
+            class="fixed inset-0 z-[110] flex items-center justify-center p-6 bg-black/60 backdrop-blur-sm opacity-0 pointer-events-none transition-opacity duration-300">
+            <div id="custom-modal"
+                class="glass-card w-full max-w-sm rounded-[2rem] p-8 border border-white/10 shadow-2xl scale-90 transition-transform duration-300">
+                <div class="flex flex-col items-center text-center">
+                    <div id="modal-icon-container"
+                        class="w-16 h-16 rounded-full flex items-center justify-center mb-6 shadow-xl">
+                        <i id="modal-icon" data-lucide="alert-circle" class="w-8 h-8"></i>
+                    </div>
+                    <h3 id="modal-title-text" class="text-2xl font-black text-white mb-2 leading-tight">Are you sure?
+                    </h3>
+                    <p id="modal-message-text" class="text-slate-400 text-sm mb-8 leading-relaxed">This action cannot be
+                        undone. Please confirm.</p>
+                    <div class="flex gap-4 w-full">
+                        <button id="modal-cancel-btn"
+                            class="flex-1 px-6 py-3.5 rounded-2xl bg-white/5 hover:bg-white/10 text-white font-bold transition-all">Cancel</button>
+                        <button id="modal-confirm-btn"
+                            class="flex-1 px-6 py-3.5 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold shadow-lg shadow-indigo-500/20 transition-all">Confirm</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Receipt Print Area (Moved outside main) -->
+    <div id="receipt-print-area" class="hidden bg-white text-black p-2 font-mono text-xs"></div>
+
+    <!-- Scripts -->
+    <script src="https://unpkg.com/dexie/dist/dexie.js"></script>
+    <script src="app.js"></script>
+    <script>
+        // Fix for mobile browser address bar height
+        const setAppHeight = () => {
+            document.documentElement.style.setProperty('--app-height', `${window.innerHeight}px`);
+        };
+        window.addEventListener('resize', setAppHeight);
+        setAppHeight();
+
+        lucide.createIcons();
+    </script>
+
+    <script>
+        if ('serviceWorker' in navigator) {
+            let refreshing = false;
+
+            // අලුත් Service Worker එක වැඩ පටන් ගත්තම පිටුව refresh කරන්න
+            navigator.serviceWorker.addEventListener('controllerchange', () => {
+                if (!refreshing) {
+                    window.location.reload();
+                    refreshing = true;
+                }
+            });
+
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js').then(reg => {
+                    // අප්ඩේට් එකක් තියෙනවාද කියලා නිතර චෙක් කරන්න (විශේෂයෙන් focus වෙනකොට)
+                    setInterval(() => {
+                        reg.update();
+                    }, 60000); // විනාඩියකට වතාවක් චෙක් කරනවා
+
+                    reg.addEventListener('updatefound', () => {
+                        const newWorker = reg.installing;
+                        newWorker.addEventListener('statechange', () => {
+                            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                // අලුත් අප්ඩේට් එකක් තියෙනවා නම් ඒක activate කරන්න පණිවිඩයක් යවනවා
+                                newWorker.postMessage({ action: 'skipWaiting' });
+                            }
+                        });
+                    });
+                });
+            });
+
+            // යූසර් ඇප් එකට ආයෙත් එනකොට (Tab focus) අප්ඩේට් එකක් තියෙනවාද කියලා බලන්න
+            document.addEventListener('visibilitychange', () => {
+                if (document.visibilityState === 'visible') {
+                    navigator.serviceWorker.ready.then(reg => {
+                        reg.update();
+                    });
+                }
+            });
+        }
+    </script>
+</body>
+
+
+
+</html>
